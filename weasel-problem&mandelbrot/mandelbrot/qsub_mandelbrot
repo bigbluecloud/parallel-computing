@@ -1,0 +1,9 @@
+#!/bin/bash
+#PBS -q batch
+#PBS -N Mandelbrot static
+#PBS -r n
+#PBS -k oe
+#PBS -l nodes=4:ppn=4
+#PBS -l walltime=999:00:00
+cd /home/s2896344/assign2/mandelbrot
+mpiexec -hostfile $PBS_NODEFILE -np 16 X11mandelbrot > output_mandelbrot

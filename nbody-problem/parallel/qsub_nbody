@@ -1,0 +1,9 @@
+#!/bin/bash
+#PBS -q batch
+#PBS -N nBodyParallel
+#PBS -r n
+#PBS -k oe
+#PBS -l nodes=4:ppn=4
+#PBS -l walltime=999:00:00
+cd /home/s2896344/assign1/parallel
+mpiexec -hostfile $PBS_NODEFILE -np 16 parallelnbody > output_nbodyparallel
