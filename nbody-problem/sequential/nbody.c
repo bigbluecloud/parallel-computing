@@ -3,6 +3,10 @@
 #include <sys/time.h> //For high resolution timer (UNIX only)
 #include <time.h> //For getting a seed for srand()
 #include <math.h> //For sqrt() and pow()
+#ifdef __MACH__ // macOS time
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 
 #define NUM_BODY 100
 #define ITERATIONS 100
@@ -85,18 +89,37 @@ void run_simulation(double body_data[][BODY_DATA_COLS]) {
   }
 }
 
+struct timespec getTime() {
+    struct timespec time;
+
+    // jbenet <https://gist.github.com/jbenet/1087739>
+    #ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    time.tv_sec = mts.tv_sec;
+    time.tv_nsec = mts.tv_nsec;
+    #else
+    clock_gettime(CLOCK_MONOTONIC, &time);
+    #endif
+
+    return time;
+}
+
 int main(int argc, char* argv[]) {
   double body_data[NUM_BODY][BODY_DATA_COLS];
   struct timespec start, end, elapsed;
   time_t seconds;
   long milliseconds;
 
-  clock_gettime(CLOCK_MONOTONIC, &start);
+  start = getTime();
   init_bodies(body_data);
   printf("Initial state\n");
   print_data(body_data);
   run_simulation(body_data);
-  clock_gettime(CLOCK_MONOTONIC, &end);
+  end = getTime();
 
   if((end.tv_nsec - start.tv_nsec) < 0) {
     seconds = end.tv_sec - start.tv_sec - 1;
